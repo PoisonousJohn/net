@@ -4,7 +4,7 @@ net
 Simple network protocols wrapper. Supported protocols: http (via curl)
 
 ## Thread-safety
-Not thread-safe.
+Transport is thread safe
 
 ##Requirements
 - C++11
