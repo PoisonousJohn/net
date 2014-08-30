@@ -14,6 +14,7 @@ Not thread-safe.
 
 ```c++
 
+
 #include <iostream>
 #include "net/http/curl/Curl.h"
 #include "net/http/Listener.h"
@@ -47,14 +48,36 @@ int main(int argc, const char * argv[])
 
     post["test"] = "test";
 
-    // also you can provide a callback
-    Request req("http://google.com", get, post);
-    http.send(req, []( const Response& resp ){
+    bool stop = false;
+    
+    auto respHandler = [&]( const Response& resp ){
         std::cout << "got response\ncode: " << resp.code << "\nerror: " << int(resp.error) << "\nerrorText: " << resp.errorText
                 << "data: " << resp.data
                 << std::endl;
 
-    });
+        stop = true;
+    };
+
+    // do request asynchronous (every request will be called on a separate thread)
+    // also you can provide callback
+    Request req("http://google.com", get, post);
+    
+    // run synchronously
+    auto resp = http.send(req);
+    respHandler(resp);
+    
+    stop = false;
+    
+    // run asynchronously
+    http.send(req, respHandler);
+
+   	// you should call update in your event loop
+   	// update will invoke callbacks and notify listeners
+    while( !stop ) {
+        http.update();
+    }
+
+    return 0;
 
 }
 
