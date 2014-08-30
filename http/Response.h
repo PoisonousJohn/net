@@ -10,10 +10,10 @@
 #define __match3__NetClientResponse__
 
 #include <iostream>
+#include "Request.h"
 
 
 namespace poison { namespace net { namespace http {
-    class Request;
 
     struct Response {
         enum class Error {
@@ -23,7 +23,7 @@ namespace poison { namespace net { namespace http {
             InternalError, // library error
         };
 
-        const Request* request;
+        Request request;
 
         std::string data;
 
@@ -36,10 +36,16 @@ namespace poison { namespace net { namespace http {
 
         std::string errorText;
 
-        Response() : code(0), error(Error::NoError) {
+        Response(const Request& request_)
+                : code(0)
+                , error(Error::NoError)
+                , request(request_)
+        {
         }
 
-        Response(const Response &rvalue) {
+        Response(const Response &rvalue)
+            : request(rvalue.request)
+        {
             data = rvalue.data;
             code = rvalue.code;
             error = rvalue.error;

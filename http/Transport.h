@@ -13,7 +13,7 @@
 #include <string>
 #include <functional>
 #include <set>
-#include "Request.h"
+#include "Response.h"
 
 namespace poison { namespace net { namespace http {
     class Listener;
@@ -24,8 +24,14 @@ namespace poison { namespace net { namespace http {
     */
     class Transport {
     public:
+
         typedef std::set<Listener*> Listeners;
+        typedef std::function<void(const Response &response)> RequestComplete;
+
+    public:
+
         Transport() {}
+
         virtual ~Transport() {}
 
         /**
@@ -33,13 +39,25 @@ namespace poison { namespace net { namespace http {
         */
 //        virtual void download(const std::string& url, std::function< void(const std::string& downloadedPath) > onComplete) = 0;
         /**
-        * @brief send request
+        * @brief sends request synchronously
         */
-        virtual void send(const Request& request, std::function<void(const Response& response)> onComplete) = 0;
+        virtual Response send(const Request& request) = 0;
+        
+        /**
+        * @brief send request asynchronously in a separate thread.\n
+        * thread will be created for each request.
+        */
+        virtual void send(const Request& request, RequestComplete onComplete) = 0;
 
         void addListener(Listener* listener);
 
         void removeListener(Listener* listener);
+
+        /**
+        * @brief you should call update in your event loop
+        * @detail update will invoke callbacks and notify listeners
+        */
+        virtual void update() = 0;
 
     private:
         // transport should not be copied

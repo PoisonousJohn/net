@@ -1,5 +1,6 @@
-
+#include <thread>
 #include "Curl.h"
+#include "Response.h"
 
 namespace poison { namespace net { namespace http {
     class CurlError : public std::runtime_error {
@@ -60,7 +61,17 @@ namespace poison { namespace net { namespace http {
     }
 
     void Curl::send(const Request& request, std::function<void(const Response& response)> onComplete) {
-        Response response;
+        std::thread thread([=]{
+            auto resp = send(request);
+            addCallback([=](){
+                onComplete(resp);
+            });
+        });
+        thread.detach();
+    }
+
+    Response Curl::send(const Request &request) {
+        Response response(request);
 
         CURL* curl = curl_easy_init();
         if ( !curl ) {
@@ -92,7 +103,7 @@ namespace poison { namespace net { namespace http {
             struct curl_slist *headers = NULL;
 
             for (const auto& header : request.getHeaders()) {
-                    headers = curl_slist_append(headers, header.c_str());
+                headers = curl_slist_append(headers, header.c_str());
             }
 
             if ( request.isBinary() || !request.getDataPost().empty() ) {
@@ -127,7 +138,7 @@ namespace poison { namespace net { namespace http {
                 curl_easy_setopt(curl, CURLOPT_HTTPGET, 1);
             }
 
-            response.request = &request;
+            response.request = request;
 #ifdef NETCLIENT_DEBUG
             DBG("[NetClient] query to URL: %s\n", response.url.c_str());
 #endif
@@ -199,12 +210,29 @@ namespace poison { namespace net { namespace http {
         }
 
         curl_easy_cleanup( curl );
+        
+        std::cout << "request complete" << std::endl;
 
-        if (onComplete)
-            onComplete(response);
+        addCallback(std::bind( &Curl::onRequestComplete, this, response ));
 
-        onRequestComplete(response);
+        return response;
+    }
 
+    void Curl::update() {
+        std::lock_guard<std::recursive_mutex> lock(m);
+
+        for (const auto& callback : completeCallbacks) {
+            std::cout << "running callback" << std::endl;
+            callback();
+        }
+
+        completeCallbacks.clear();
+    }
+
+    void Curl::addCallback(const Callback&& callback) {
+        std::lock_guard<std::recursive_mutex> lock(m);
+        std::cout << "added callback" << std::endl;
+        completeCallbacks.emplace_back( std::move(callback) );
     }
 
 } } }

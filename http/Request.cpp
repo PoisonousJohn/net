@@ -40,18 +40,26 @@ namespace poison { namespace net { namespace http {
     Request::Request(const Request&& rvalue)
             : url(std::move(rvalue.url))
             , dataGet(std::move(rvalue.dataGet))
-            , dataPost(std::move(dataPost))
+            , dataPost(std::move(rvalue.dataPost))
             , binary(std::move(rvalue.binary))
             , headers(std::move(rvalue.headers))
     {
 
     }
 
-    Request& Request::operator=(const Request&& rvalue) {
-        url = std::move(rvalue.url);
-        dataGet = std::move(rvalue.dataGet);
-        dataPost = std::move(rvalue.dataPost);
-        binary = std::move(rvalue.binary);
+//    Request& Request::operator=(const Request&& rvalue) {
+//        url = std::move(rvalue.url);
+//        dataGet = std::move(rvalue.dataGet);
+//        dataPost = std::move(rvalue.dataPost);
+//        binary = std::move(rvalue.binary);
+//        return *this;
+//    }
+
+    Request& Request::operator=(const Request& rvalue) {
+        url = rvalue.url;
+        dataGet = rvalue.dataGet;
+        dataPost = rvalue.dataPost;
+        binary = rvalue.binary;
         return *this;
     }
 

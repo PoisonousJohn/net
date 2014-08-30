@@ -13,7 +13,6 @@
 #include <functional>
 #include <unordered_map>
 #include <vector>
-#include "Response.h"
 
 
 namespace poison { namespace net { namespace http {
@@ -50,7 +49,9 @@ namespace poison { namespace net { namespace http {
 
         Request(const Request&& rvalue);
 
-        Request& operator=(const Request&& rvalue);
+        Request& operator=(const Request& rvalue);
+
+//        Request& operator=(const Request&& rvalue);
 
         virtual ~Request() {}
 
