@@ -1,7 +1,10 @@
 net
 ===
 
-Simple network protocols wrapper. Current supported protocols: http (via curl)
+Simple network protocols wrapper. Supported protocols: http (via curl)
+
+## Thread-safety
+Not thread-safe.
 
 ##Requirements
 - C++11
