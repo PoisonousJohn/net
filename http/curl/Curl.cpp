@@ -2,6 +2,11 @@
 #include "Curl.h"
 #include "Response.h"
 
+#define CURL_DEBUG 1
+#if CURL_DEBUG
+#include "utils.h"
+#endif
+
 namespace poison { namespace net { namespace http {
     class CurlError : public std::runtime_error {
     public:
@@ -42,9 +47,11 @@ namespace poison { namespace net { namespace http {
         }
         else if (it == CURLINFO_DATA_IN) {
             // Lots of data in, turn on if necessary
+            std::cerr << "CURL HTTP DATA IN: " << buff.data() << std::endl;
         }
         else if (it == CURLINFO_DATA_OUT) {
             // Lots of data out, turn on if necessary
+            std::cerr << "CURL HTTP DATA OUT: " << buff.data() << std::endl;
         }
         else {
             // Any others?
@@ -84,11 +91,13 @@ namespace poison { namespace net { namespace http {
 
 
             auto url = request.getUrl();
+            
+            std::string queryString;
 
             std::string postDataString;
 
             if (!request.getData().empty()) {
-                url += "?";
+//                url += "?";
                 auto escapedData = request.getData();
                 for (auto& pair : escapedData) {
 
@@ -97,8 +106,10 @@ namespace poison { namespace net { namespace http {
                     curl_free(escapedStr);
                 }
                 auto getParamsString = Request::implodeMap(escapedData);
-                url += getParamsString;
+                queryString += getParamsString;
             }
+            
+            request.setQueryString( queryString );
 
             struct curl_slist *headers = NULL;
 
@@ -106,7 +117,7 @@ namespace poison { namespace net { namespace http {
                 headers = curl_slist_append(headers, header.c_str());
             }
 
-            if ( request.isBinary() || !request.getDataPost().empty() ) {
+            if ( request.isPost() ) {
                 // POST query
                 curl_easy_setopt(curl, CURLOPT_POST, 1);
 
@@ -124,8 +135,8 @@ namespace poison { namespace net { namespace http {
                     }
 
                     postString = Request::implodeMap(escapedData);
-#ifdef NETCLIENT_DEBUG
-                    DBG("[NetClient] post params: %s\n", postString.c_str());
+#if CURL_DEBUG
+                    DBG("[HTTP] post params: %s\n", postString.c_str());
 #endif
                     curl_easy_setopt(curl, CURLOPT_COPYPOSTFIELDS, postString.c_str());
 
@@ -139,14 +150,14 @@ namespace poison { namespace net { namespace http {
             }
 
             response.request = request;
-#ifdef NETCLIENT_DEBUG
-            DBG("[NetClient] query to URL: %s\n", response.url.c_str());
+#if CURL_DEBUG
+            DBG("[HTTP] query to URL: %s\n", response.request.getFullUrl().c_str());
 #endif
 
             curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errbuff);
-            CurlCheckError( curl_easy_setopt(curl, CURLOPT_DEBUGFUNCTION, curl_debug), errbuff );
-            //        CurlCheckError( curl_easy_setopt(curl, CURLOPT_VERBOSE, true) );
-            CurlCheckError( curl_easy_setopt(curl, CURLOPT_URL, request.getUrl().c_str() ), errbuff );
+//            CurlCheckError( curl_easy_setopt(curl, CURLOPT_DEBUGFUNCTION, curl_debug), errbuff );
+//            CurlCheckError( curl_easy_setopt(curl, CURLOPT_VERBOSE, true), errbuff );
+            CurlCheckError( curl_easy_setopt(curl, CURLOPT_URL, request.getFullUrl().c_str() ), errbuff );
             CurlCheckError( curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1 ), errbuff );
             CurlCheckError( curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_to_string), errbuff );
             CurlCheckError( curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response.data), errbuff );
@@ -174,8 +185,8 @@ namespace poison { namespace net { namespace http {
                 curl_slist_free_all(headers);
             }
 
-#ifdef NETCLIENT_DEBUG
-            DBG("[NetClient] RESPONSE %s <%d>:\n %s", response.url.c_str(), response.code, response.data.c_str());
+#if CURL_DEBUG
+            DBG("[HTTP] RESPONSE %s <%d>:\n %s", response.request.getFullUrl().c_str(), response.code, response.data.c_str());
 #endif
 
         } catch (const CurlError& e) {
@@ -211,8 +222,6 @@ namespace poison { namespace net { namespace http {
 
         curl_easy_cleanup( curl );
         
-        std::cout << "request complete" << std::endl;
-
         addCallback(std::bind( &Curl::onRequestComplete, this, response ));
 
         return response;
@@ -222,7 +231,6 @@ namespace poison { namespace net { namespace http {
         std::lock_guard<std::recursive_mutex> lock(m);
 
         for (const auto& callback : completeCallbacks) {
-            std::cout << "running callback" << std::endl;
             callback();
         }
 
@@ -231,7 +239,6 @@ namespace poison { namespace net { namespace http {
 
     void Curl::addCallback(const Callback&& callback) {
         std::lock_guard<std::recursive_mutex> lock(m);
-        std::cout << "added callback" << std::endl;
         completeCallbacks.emplace_back( std::move(callback) );
     }
 

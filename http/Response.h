@@ -60,4 +60,15 @@ namespace poison { namespace net { namespace http {
 
 } } }
 
+static inline std::ostream& operator<<(std::ostream& stream, const poison::net::http::Response& resp) {
+    stream << "Response to url<" << resp.request.getFullUrl() << "> code <" << resp.code << "> data:\n"
+    << resp.data << std::endl
+    << "post data:\n"
+    << poison::net::http::Request::implodeMap( resp.request.getDataPost() )
+    << resp.request.getBinaryData()
+    << std::endl;
+    
+    return stream;
+}
+
 #endif /* defined(__match3__NetClientResponse__) */

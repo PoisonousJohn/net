@@ -51,15 +51,22 @@ namespace poison { namespace net { namespace http {
 
         Request& operator=(const Request& rvalue);
 
-//        Request& operator=(const Request&& rvalue);
+        Request& operator=(const Request&& rvalue);
 
         virtual ~Request() {}
+        
+        void setQueryString(const std::string& value) const { queryString = value; }
+        
+        /**
+         * @return string - url + query string
+         **/
+        std::string getFullUrl() const { return queryString.empty() ? url : url + "?" + queryString; }
 
         const std::string& getUrl() const { return url; }
 
         const std::string& getBinaryData() const { return binary; }
 
-        bool isBinary() const { return !binary.empty(); }
+        bool isPost() const { return post; }
 
         const RequestData& getData() const { return dataGet; }
 
@@ -96,10 +103,14 @@ namespace poison { namespace net { namespace http {
         }
 
     protected:
+        
+        bool post;
 
         Headers headers;
 
         std::string url;
+        
+        mutable std::string queryString;
 
         std::string binary;
 

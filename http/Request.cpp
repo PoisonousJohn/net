@@ -15,7 +15,11 @@ namespace poison { namespace net { namespace http {
         : url(_url)
         , dataGet(_data)
         , dataPost(_dataPost)
+        , post (false)
     {
+        if (!dataPost.empty()) {
+            post = true;
+        }
 
     }
 
@@ -23,6 +27,7 @@ namespace poison { namespace net { namespace http {
         : url(url_)
         , dataGet(getData)
         , binary(binaryData)
+        , post(true)
     {
 
     }
@@ -33,6 +38,8 @@ namespace poison { namespace net { namespace http {
             , dataPost(rvalue.dataPost)
             , binary(rvalue.binary)
             , headers(rvalue.headers)
+            , queryString(rvalue.queryString)
+            , post(rvalue.post)
     {
 
     }
@@ -43,23 +50,33 @@ namespace poison { namespace net { namespace http {
             , dataPost(std::move(rvalue.dataPost))
             , binary(std::move(rvalue.binary))
             , headers(std::move(rvalue.headers))
+            , queryString(std::move(rvalue.queryString))
+            , post(rvalue.post)
     {
 
     }
 
-//    Request& Request::operator=(const Request&& rvalue) {
-//        url = std::move(rvalue.url);
-//        dataGet = std::move(rvalue.dataGet);
-//        dataPost = std::move(rvalue.dataPost);
-//        binary = std::move(rvalue.binary);
-//        return *this;
-//    }
+    Request& Request::operator=(const Request&& rvalue) {
+        url = std::move(rvalue.url);
+        dataGet = std::move(rvalue.dataGet);
+        dataPost = std::move(rvalue.dataPost);
+        binary = std::move(rvalue.binary);
+        headers = std::move(rvalue.headers);
+        queryString = std::move(rvalue.queryString);
+        post = rvalue.post;
+        
+        return *this;
+    }
 
     Request& Request::operator=(const Request& rvalue) {
         url = rvalue.url;
         dataGet = rvalue.dataGet;
         dataPost = rvalue.dataPost;
         binary = rvalue.binary;
+        headers = rvalue.headers;
+        queryString = rvalue.queryString;
+        post = rvalue.post;
+        
         return *this;
     }
 
