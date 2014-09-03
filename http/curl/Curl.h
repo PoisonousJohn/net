@@ -29,11 +29,9 @@ namespace poison { namespace net { namespace http {
 
         std::recursive_mutex m;
 
-    private:
+    protected:
 
         void addCallback( const Callback&& callback );
-
-    protected:
 
         void CurlCheckError( CURLcode code, const char* errbuff );
 

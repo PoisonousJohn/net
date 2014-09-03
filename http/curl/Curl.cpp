@@ -2,10 +2,13 @@
 #include "Curl.h"
 #include "Response.h"
 
-#define CURL_DEBUG 1
-#if CURL_DEBUG
-#include "utils.h"
+#ifdef POISON_DEBUG
+#include <engine/FrameworkUtils.h>
+#else
+#define DBG(...)
 #endif
+
+#define CURL_DEBUG 1
 
 namespace poison { namespace net { namespace http {
     class CurlError : public std::runtime_error {
@@ -71,7 +74,9 @@ namespace poison { namespace net { namespace http {
         std::thread thread([=]{
             auto resp = send(request);
             addCallback([=](){
-                onComplete(resp);
+                if (onComplete) {
+                    onComplete(resp);
+                }
             });
         });
         thread.detach();
@@ -176,7 +181,7 @@ namespace poison { namespace net { namespace http {
 
             curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response.code);
 
-            if (response.code != 200) {
+            if (response.code == 0) {
                 // TODO: check this without connection
                 response.error = Response::Error::ConnectionError;
             }
