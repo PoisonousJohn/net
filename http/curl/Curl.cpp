@@ -1,14 +1,13 @@
 #include <thread>
+#include <vector>
 #include "Curl.h"
 #include "Response.h"
 
 #ifdef POISON_DEBUG
-#include <engine/FrameworkUtils.h>
-#else
-#define DBG(...)
+#include <poison_log/log.h>
 #endif
 
-#define CURL_DEBUG 1
+#define CURL_DEBUG 0
 
 namespace poison { namespace net { namespace http {
     class CurlError : public std::runtime_error {
@@ -26,9 +25,14 @@ namespace poison { namespace net { namespace http {
         CURLcode code;
     };
 
-//            http://stackoverflow.com/questions/2376824/libcurl-http-request-to-save-respond-into-variable-c
     size_t write_to_string(void *ptr, size_t size, size_t count, void *stream) {
-        ((std::string*)stream)->append((char*)ptr, 0, size*count);
+        const char* start = (char*)ptr;
+        const char* end = start + count;
+        std::vector<char> bytes;
+        bytes.insert(bytes.end(), start, end);
+        auto data = (std::string*)stream;
+        std::string binary(bytes.begin(), bytes.end());
+        data->append(std::move(binary));
         return size*count;
     }
 
