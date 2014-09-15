@@ -7,7 +7,7 @@
 #include <poison_log/log.h>
 #endif
 
-#define CURL_DEBUG 0
+#define CURL_DEBUG 1
 
 namespace poison { namespace net { namespace http {
     class CurlError : public std::runtime_error {
@@ -144,7 +144,7 @@ namespace poison { namespace net { namespace http {
                     }
 
                     postString = Request::implodeMap(escapedData);
-#if CURL_DEBUG
+#if POISON_DEBUG && CURL_DEBUG
                     DBG("[HTTP] post params: %s\n", postString.c_str());
 #endif
                     curl_easy_setopt(curl, CURLOPT_COPYPOSTFIELDS, postString.c_str());
@@ -159,7 +159,7 @@ namespace poison { namespace net { namespace http {
             }
 
             response.request = request;
-#if CURL_DEBUG
+#if POISON_DEBUG && CURL_DEBUG
             DBG("[HTTP] query to URL: %s\n", response.request.getFullUrl().c_str());
 #endif
 
@@ -194,7 +194,7 @@ namespace poison { namespace net { namespace http {
                 curl_slist_free_all(headers);
             }
 
-#if CURL_DEBUG
+#if POISON_DEBUG && CURL_DEBUG
             DBG("[HTTP] RESPONSE %s <%d>:\n %s", response.request.getFullUrl().c_str(), response.code, response.data.c_str());
 #endif
 
