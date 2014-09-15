@@ -7,7 +7,7 @@
 #include <poison_log/log.h>
 #endif
 
-#define CURL_DEBUG 1
+#define CURL_DEBUG 0
 
 namespace poison { namespace net { namespace http {
     class CurlError : public std::runtime_error {
