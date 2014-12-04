@@ -10,6 +10,7 @@
 #define __match3__NetClientService__
 
 #include <iostream>
+#include <vector>
 #include <string>
 #include <functional>
 #include <set>
@@ -29,6 +30,8 @@ namespace poison { namespace net { namespace http {
         typedef std::function<void(const Response &response)> RequestComplete;
 
     public:
+        
+        typedef std::function< void() > UpdateCallback;
 
         Transport() {}
 
@@ -49,15 +52,23 @@ namespace poison { namespace net { namespace http {
         */
         virtual void send(const Request& request, RequestComplete onComplete) = 0;
 
+        /**
+         * @warning not thread-safe
+         */
         void addListener(Listener* listener);
-
+        
+        /**
+         * @warning not thread-safe
+         */
         void removeListener(Listener* listener);
+        
+        virtual void doOnUpdate(const UpdateCallback&& callback);
 
         /**
         * @brief you should call update in your event loop
         * @detail update will invoke callbacks and notify listeners
         */
-        virtual void update() = 0;
+        virtual void update();
 
     private:
         // transport should not be copied
@@ -66,6 +77,16 @@ namespace poison { namespace net { namespace http {
         Transport(const Transport&) = delete;
 
         Listeners listeners;
+
+    protected:
+                        
+        typedef std::vector< UpdateCallback > UpdateCallbacks;
+        typedef std::recursive_mutex Mutex;
+        typedef std::lock_guard<Mutex> Lock;
+
+        UpdateCallbacks updateCallbacks;
+
+        std::recursive_mutex m;
 
     protected:
 

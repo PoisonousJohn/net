@@ -3,11 +3,14 @@
 #include "Curl.h"
 #include "Response.h"
 
+
+#define POISON_DEBUG 1
+
 #ifdef POISON_DEBUG
 #include <poison_log/log.h>
 #endif
 
-#define CURL_DEBUG 0
+//#define CURL_DEBUG 1
 
 namespace poison { namespace net { namespace http {
     class CurlError : public std::runtime_error {
@@ -77,7 +80,7 @@ namespace poison { namespace net { namespace http {
     void Curl::send(const Request& request, std::function<void(const Response& response)> onComplete) {
         std::thread thread([=]{
             auto resp = send(request);
-            addCallback([=](){
+            doOnUpdate([=](){
                 if (onComplete) {
                     onComplete(resp);
                 }
@@ -231,25 +234,12 @@ namespace poison { namespace net { namespace http {
 
         curl_easy_cleanup( curl );
         
-        addCallback(std::bind( &Curl::onRequestComplete, this, response ));
+//        addCallback(std::bind( &Curl::onRequestComplete, this, response ));
+        onRequestComplete(response);
 
         return response;
     }
 
-    void Curl::update() {
-        std::lock_guard<std::recursive_mutex> lock(m);
-
-        for (const auto& callback : completeCallbacks) {
-            callback();
-        }
-
-        completeCallbacks.clear();
-    }
-
-    void Curl::addCallback(const Callback&& callback) {
-        std::lock_guard<std::recursive_mutex> lock(m);
-        completeCallbacks.emplace_back( std::move(callback) );
-    }
 
 } } }
 

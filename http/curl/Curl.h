@@ -16,22 +16,8 @@ namespace poison { namespace net { namespace http {
 
         void send(const Request& request, RequestComplete onComplete) override;
 
-        void update() override;
-
-    private:
-
-        typedef std::function< void() > Callback;
-        typedef std::vector< Callback > RequestCompleteCallbacks;
-        typedef std::recursive_mutex Mutex;
-        typedef std::lock_guard<Mutex> Lock;
-
-        RequestCompleteCallbacks completeCallbacks;
-
-        std::recursive_mutex m;
-
     protected:
 
-        void addCallback( const Callback&& callback );
 
         void CurlCheckError( CURLcode code, const char* errbuff );
 
