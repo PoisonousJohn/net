@@ -10,7 +10,9 @@
 #include <poison_log/log.h>
 #endif
 
-//#define CURL_DEBUG 1
+#ifdef DEBUG
+#define CURL_DEBUG 1
+#endif
 
 namespace poison { namespace net { namespace http {
     class CurlError : public std::runtime_error {
@@ -228,7 +230,7 @@ namespace poison { namespace net { namespace http {
         } catch (...) {
 
             response.error = Response::Error::InternalError;
-            response.errorText = errbuff;
+            response.errorText = "Unknown error";
 
         }
 
